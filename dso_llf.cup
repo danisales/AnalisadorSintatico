@@ -1,0 +1,67 @@
+package cup;
+
+import java_cup.runtime.*;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
+import Lexer;
+
+parser code {:
+  protected Lexer lexer;
+:}
+
+init with {:
+  ComplexSymbolFactory f = new ComplexSymbolFactory();
+  symbolFactory = f;
+  File file = new File("input.txt");
+  FileInputStream fis = null;
+  try {
+    fis = new FileInputStream(file);
+  } catch (IOException e) {
+    e.printStackTrace();
+  } 
+  lexer = new Lexer(f,fis);
+:};
+scan with {: return lexer.next_token(); :};
+
+/* Gramática usada
+Goal ::= MainClass ( ClassDeclaration )* <EOF>
+
+MainClass ::= "class" Identifier "{" "public" "static" "void" "main" "(" "String" "[" "]" Identifier ")"
+"{" Statement "}" "}"
+
+ClassDeclaration ::= "class" Identifier ( "extends" Identifier )? "{" ( VarDeclaration )* (
+MethodDeclaration )* "}"
+
+VarDeclaration ::= Type Identifier ";"
+
+MethodDeclaration ::= "public" Type Identifier "(" ( Type Identifier ( "," Type Identifier )* )? ")" "{" (
+VarDeclaration )* ( Statement )* "return" Expression ";" "}"
+
+Type ::= "int" "[" "]"
+| "boolean"
+| "int"
+| Identifier
+
+Statement ::= "{" ( Statement )* "}"
+| "if" "(" Expression ")" Statement "else" Statement
+| "while" "(" Expression ")" Statement
+| "System.out.println" "(" Expression ")" ";"
+| Identifier "=" Expression ";"
+| Identifier "[" Expression "]" "=" Expression ";"
+
+Expression ::= Expression ( "&&" | "<" | "+" | "­" | "*" ) Expression
+| Expression "[" Expression "]"
+| Expression "." "length"
+| Expression "." Identifier "(" ( Expression ( "," Expression )* )? ")"
+| <INTEGER_LITERAL>
+| "true"
+| "false"
+| Identifier
+| "this"
+| "new" "int" "[" Expression "]"
+| "new" Identifier "(" ")"
+| "!" Expression
+| "(" Expression ")"
+
+Identifier ::= <IDENTIFIER> */
