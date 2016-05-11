@@ -44,13 +44,16 @@ non terminal ClassDeclList classList;
 non terminal Identifier ident;
 
 non terminal Statement stmt;
-non terminal Statemant stmtList;
+non terminal StatementList stmtList;
 
-non terminal VarDeclaration varDecl;
-non terminal VarDeclarationList varList;
+non terminal VarDecl varDecl;
+non terminal VarDeclList varList;
 
-non terminal MethodDeclaration methodDecl;
-non terminal MethodDeclarationList methodList;
+non terminal MethodDecl methodDecl;
+non terminal MethodDeclList methodList;
+
+non terminal Formal formal;
+non terminal FormalList formalList;
 
 non terminal Exp expr;
 non terminal ExpList exprList;
@@ -110,3 +113,31 @@ Expression ::= Expression ( "&&" | "<" | "+" | "­" | "*" ) Expression
 | "(" Expression ")"
 
 Identifier ::= <IDENTIFIER> */
+
+start with goal;
+
+goal ::= mainClass:main classList:classes {: RESULT = new Program (main, classes); :};
+
+mainClass ::= CLASS ident:name LBRACKET PUBLIC STATIC VOID MAIN LPAREN STRING LBRACE RBRACE ident:args RPAREN
+              LBRACKET stmt:stmt RBRACKET RBRACKET {: RESULT = new MainClass(name, args, stmt); :};
+
+classList ::= classList:classes classDecl:cls {: classes.addElement(cls);
+                                                  RESULT = classes; :}
+                                              | {: RESULT = new ClassDeclList(); :};
+
+classDecl ::= CLASS ident:name LBRACKET varList:varLs methodList:mtdLs RBRACKET
+              {: RESULT = new ClassDeclSimple(name, varLs, mtdLs); :}
+            | CLASS ident:name EXTENDS ident:extClass LBRACKET varList:varLs methodList:mtdLs RBRACKET
+            {: RESULT = new ClassDeclExtends(name, extClass, varLs, mtdLs); :};
+
+varList ::= varList:vars varDecl:var {: vars.addElement(vars); RESULT = vars; :}
+                                  | {: RESULT = new VarDeclList(); :};
+
+varDecl ::= type:tp ident:id SEMI {: RESULT = new VarDecl(tp, id); :};
+
+methodList ::= methodList:mtds methodDecl:mtd {: mtds.addElement(mtd);
+                                                  RESULT = mtds; :}
+                                              | {: RESULT = new MethodDeclList(); :};
+
+methodDecl ::= PUBLIC type:tp ident:id LPAREN formalList:formalLs RPAREN LBRACKET varList:vars stmtList:stmtLs
+              RETURN expr:expr SEMI RBRACKET {: RESULT = new MethodDecl(tp, id, formalLs, vars, stmtLs,expr); :};
