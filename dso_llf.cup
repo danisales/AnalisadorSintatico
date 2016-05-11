@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
 import Lexer;
+import ast.*;
+import visitor.*;
 
 parser code {:
   protected Lexer lexer;
@@ -23,6 +25,36 @@ init with {:
   lexer = new Lexer(f,fis);
 :};
 scan with {: return lexer.next_token(); :};
+
+terminal AND, LESST, EQUALOP, NOTEQUAL, PLUS, MINUS, TIMES, NOT, SEMI,
+         DOT, COMMA, EQUAL, LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET,
+         BOOL, CLASS, PUBLIC, EXTENDS, STATIC, VOID, MAIN, STRING, INT, WHILE, IF,
+         ELSE, RETURN, LENGTH, THIS, NEW, SYSO;
+terminal Boolean TRUE, FALSE;
+terminal Integer INTEGER;
+terminal String ID;
+
+non terminal MainClass mainClass;
+
+non terminal ClassDecl classDecl;
+non terminal ClassDeclList classList;
+
+non terminal Identifier ident;
+
+non terminal Statement stmt;
+non terminal Statemant stmtList;
+
+non terminal VarDeclaration varDecl;
+non terminal VarDeclarationList varList;
+
+non terminal MethodDeclaration methodDecl;
+non terminal MethodDeclarationList methodList;
+
+non terminal Exp expr;
+non terminal ExpList exprList;
+
+non terminal Type type;
+
 
 /* Gramática usada
 Goal ::= MainClass ( ClassDeclaration )* <EOF>

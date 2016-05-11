@@ -91,7 +91,7 @@ onelinecomment = "//" ~{linebreak}
 (não há operador de divisão, por enquanto) */
 "&&"	{ return symbolFactory.newSymbol("AND", AND); }
 "<"		{ return symbolFactory.newSymbol("LESST", LESST); }
-"=="	{ return symbolFactory.newSymbol("EQUAL", EQUAL); }
+"=="	{ return symbolFactory.newSymbol("EQUALOP", EQUALOP); }
 "!="	{ return symbolFactory.newSymbol("NOTEQUAL", NOTEQUAL); }
 "+"		{ return symbolFactory.newSymbol("PLUS", PLUS); }
 "-"		{ return symbolFactory.newSymbol("MINUS", MINUS); }
