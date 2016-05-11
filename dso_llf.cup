@@ -4,7 +4,6 @@ import java_cup.runtime.*;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
-import Lexer;
 import ast.*;
 import visitor.*;
 
@@ -130,7 +129,7 @@ classDecl ::= CLASS ident:name LBRACKET varList:varLs methodList:mtdLs RBRACKET
             | CLASS ident:name EXTENDS ident:extClass LBRACKET varList:varLs methodList:mtdLs RBRACKET
             {: RESULT = new ClassDeclExtends(name, extClass, varLs, mtdLs); :};
 
-varList ::= varList:vars varDecl:var {: vars.addElement(vars); RESULT = vars; :}
+varList ::= varList:vars varDecl:var {: vars.addElement(var); RESULT = vars; :}
                                   | {: RESULT = new VarDeclList(); :};
 
 varDecl ::= type:tp ident:id SEMI {: RESULT = new VarDecl(tp, id); :};
