@@ -55,6 +55,17 @@ non terminal ExpList exprList;
 
 non terminal Type type;
 
+//Precedências
+//http://cseweb.ucsd.edu/~ricko/CSE11/Java_Operator_Precedence_Table.pdf
+
+precedence right EQUAL;
+precedence left AND;
+precedence left EQUALOP, NOTEQUAL;
+precedence left LESST;
+precedence left PLUS, MINUS;
+precedence left TIMES;
+precedence right NOT, NEW;
+precedence left DOT;
 
 /* Gramática usada
 Goal ::= MainClass ( ClassDeclaration )* <EOF>
