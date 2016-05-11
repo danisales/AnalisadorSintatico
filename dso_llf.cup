@@ -34,6 +34,8 @@ terminal Boolean TRUE, FALSE;
 terminal Integer INTEGER;
 terminal String ID;
 
+non terminal Program goal;
+
 non terminal MainClass mainClass;
 
 non terminal ClassDecl classDecl;
