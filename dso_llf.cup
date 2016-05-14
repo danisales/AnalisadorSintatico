@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import ast.*;
 import visitor.*;
+import cup.Lexer;
 
 parser code {:
   protected Lexer lexer;
@@ -97,7 +98,7 @@ Statement ::= "{" ( Statement )* "}"
 | Identifier "=" Expression ";"
 | Identifier "[" Expression "]" "=" Expression ";"
 
-Expression ::= Expression ( "&&" | "<" | "+" | "­" | "*" ) Expression
+Expression ::= Expression ( "&&" | "<" | "+" | "­-" | "*" ) Expression
 | Expression "[" Expression "]"
 | Expression "." "length"
 | Expression "." Identifier "(" ( Expression ( "," Expression )* )? ")"
@@ -117,20 +118,20 @@ start with goal;
 
 goal ::= mainClass:main classList:classes {: RESULT = new Program (main, classes); :};
 
-mainClass ::= CLASS ident:name LBRACKET PUBLIC STATIC VOID MAIN LPAREN STRING LBRACE RBRACE ident:args RPAREN
-              LBRACKET stmt:stmt RBRACKET RBRACKET {: RESULT = new MainClass(name, args, stmt); :};
+mainClass ::= CLASS ident:name LBRACE PUBLIC STATIC VOID MAIN LPAREN STRING LBRACKET RBRACKET ident:args RPAREN
+              LBRACE stmt:stmt RBRACE RBRACE {: RESULT = new MainClass(name, args, stmt); :};
 
 classList ::= classList:classes classDecl:cls {: classes.addElement(cls);
                                                   RESULT = classes; :}
                                               | {: RESULT = new ClassDeclList(); :};
 
-classDecl ::= CLASS ident:name LBRACKET varList:varLs methodList:mtdLs RBRACKET
+classDecl ::= CLASS ident:name LBRACE varList:varLs methodList:mtdLs RBRACE
               {: RESULT = new ClassDeclSimple(name, varLs, mtdLs); :}
-            | CLASS ident:name EXTENDS ident:extClass LBRACKET varList:varLs methodList:mtdLs RBRACKET
+             | CLASS ident:name EXTENDS ident:extClass LBRACE varList:varLs methodList:mtdLs RBRACE
             {: RESULT = new ClassDeclExtends(name, extClass, varLs, mtdLs); :};
 
 varList ::= varList:vars varDecl:var {: vars.addElement(var); RESULT = vars; :}
-                                  | {: RESULT = new VarDeclList(); :};
+                                     | {: RESULT = new VarDeclList(); :};
 
 varDecl ::= type:tp ident:id SEMI {: RESULT = new VarDecl(tp, id); :};
 
@@ -138,5 +139,53 @@ methodList ::= methodList:mtds methodDecl:mtd {: mtds.addElement(mtd);
                                                   RESULT = mtds; :}
                                               | {: RESULT = new MethodDeclList(); :};
 
-methodDecl ::= PUBLIC type:tp ident:id LPAREN formalList:formalLs RPAREN LBRACKET varList:vars stmtList:stmtLs
-              RETURN expr:expr SEMI RBRACKET {: RESULT = new MethodDecl(tp, id, formalLs, vars, stmtLs,expr); :};
+methodDecl ::= PUBLIC type:tp ident:id LPAREN formalList:formalLs RPAREN LBRACE varList:vars stmtList:stmtLs
+              RETURN expr:expr SEMI RBRACE {: RESULT = new MethodDecl(tp, id, formalLs, vars, stmtLs,expr); :};
+
+formalList ::= formalList:list COMMA type:ty ident:id {: Formal formal = new Formal(ty,id); list.addElement(formal);
+                                                                  RESULT = list; :}
+              | formal:formal {: FormalList list = new FormalList(); list.addElement(formal);
+                                 RESULT = list; :}
+              | {: RESULT = new FormalList(); :};
+
+formal ::= type:tp ident:id {: RESULT = new Formal(tp, id); :};
+
+type ::= INT LBRACKET RBRACKET {: RESULT = new IntArrayType(); :}
+        | BOOL {: RESULT = new BooleanType(); :}
+        | INT {: RESULT = new IntegerType(); :}
+        | ident:id {: RESULT = new IdentifierType(id.toString());  :};
+
+stmtList ::= stmt:stmt stmtList:list {: list.addElement(stmt); RESULT = list; :}
+                                  | {: RESULT = new StatementList(); :};
+
+stmt ::= LBRACE stmtList:list RBRACE {: RESULT = new Block(list); :}
+       | IF LPAREN expr:exp RPAREN stmt:stmtif ELSE stmt:stmtelse {: RESULT = new If(exp, stmtif, stmtelse); :}
+       | WHILE LPAREN expr:exp RPAREN stmt:stmt {: RESULT = new While(exp,stmt); :}
+       | SYSO LPAREN expr:exp RPAREN SEMI {: RESULT = new Print(exp); :}
+       | ident:id EQUAL expr:exp SEMI {: RESULT = new Assign(id, exp); :}
+       | ident:id LBRACKET expr:exp1 RBRACKET EQUAL expr:exp2 SEMI {: RESULT = new ArrayAssign(id,exp1,exp2); :};
+
+exprList ::= exprList:exprLs COMMA expr:exp {: exprLs.addElement(exp); RESULT = exprLs; :}
+                          | expr:exp {: ExpList exprLs = new ExpList(); exprLs.addElement(exp);
+                                        RESULT = exprLs; :}
+                          | {: RESULT = new ExpList(); :};
+
+expr ::= expr:exp1 AND expr:exp2 {: RESULT = new And(exp1,exp2); :}
+       | expr:exp1 LESST expr:exp2 {: RESULT = new LessThan(exp1,exp2); :}
+       | expr:exp1 PLUS expr:exp2 {: RESULT = new Plus(exp1,exp2); :}
+       | expr:exp1 MINUS expr:exp2 {: RESULT = new Minus(exp1,exp2); :}
+       | expr:exp1 TIMES expr:exp2 {: RESULT = new Times(exp1,exp2); :}
+       | expr:exp1 LBRACKET expr:exp2 RBRACKET {: RESULT = new ArrayLookup(exp1,exp2); :}
+       | expr:exp DOT LENGTH {: RESULT = new ArrayLength(exp); :}
+       | expr:exp DOT ident:id LPAREN exprList:expLs RPAREN {: RESULT = new Call(exp, id, expLs); :}
+       | INTEGER:i {: RESULT = new IntegerLiteral(i); :}
+       | TRUE {: RESULT = new True(); :}
+       | FALSE {: RESULT = new False(); :}
+       | ident:id {: RESULT = new IdentifierExp(id.toString()); :}
+       | THIS {: RESULT = new This(); :}
+       | NEW INT LBRACKET expr:exp RBRACKET {: RESULT = new NewArray(exp); :}
+       | NEW ident:id LBRACKET RBRACKET {: RESULT = new NewObject(id); :}
+       | NOT expr:exp {: RESULT = new Not(exp); :}
+       | LPAREN expr:exp RPAREN {: RESULT = exp; :};
+
+ident ::= ID:id {: RESULT = new Identifier(id); :};
