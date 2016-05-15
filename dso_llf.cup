@@ -184,7 +184,7 @@ expr ::= expr:exp1 AND expr:exp2 {: RESULT = new And(exp1,exp2); :}
        | ident:id {: RESULT = new IdentifierExp(id.toString()); :}
        | THIS {: RESULT = new This(); :}
        | NEW INT LBRACKET expr:exp RBRACKET {: RESULT = new NewArray(exp); :}
-       | NEW ident:id LBRACKET RBRACKET {: RESULT = new NewObject(id); :}
+       | NEW ident:id LPAREN RPAREN {: RESULT = new NewObject(id); :}
        | NOT expr:exp {: RESULT = new Not(exp); :}
        | LPAREN expr:exp RPAREN {: RESULT = exp; :};
 
