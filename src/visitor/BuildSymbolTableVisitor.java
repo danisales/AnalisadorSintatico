@@ -36,14 +36,25 @@ import ast.Program;
 import ast.This;
 import ast.Times;
 import ast.True;
+import ast.Type;
 import ast.VarDecl;
 import ast.While;
 
 public class BuildSymbolTableVisitor implements Visitor {
-
+	
+	class ErrorMsg {
+		boolean anyErrors;
+		void complain(String msg) {
+			anyErrors = true;
+			System.out.println(msg);
+		}
+	}
+	
+	ErrorMsg error;
 	SymbolTable symbolTable;
 
 	public BuildSymbolTableVisitor() {
+		error = new ErrorMsg();
 		symbolTable = new SymbolTable();
 	}
 
@@ -66,15 +77,26 @@ public class BuildSymbolTableVisitor implements Visitor {
 	// Identifier i1,i2;
 	// Statement s;
 	public void visit(MainClass n) {
+		String classId = n.i1.toString();
+		if(!symbolTable.addClass(classId, null)){
+			error.complain("Classe "+ classId + " já foi definida");
+		}
+		currClass = symbolTable.getClass(classId);
 		n.i1.accept(this);
 		n.i2.accept(this);
 		n.s.accept(this);
+		currClass = null;
 	}
 
 	// Identifier i;
 	// VarDeclList vl;
 	// MethodDeclList ml;
 	public void visit(ClassDeclSimple n) {
+		String classId = n.i.toString();
+		if(!symbolTable.addClass(classId, null)){
+			error.complain("Classe "+ classId + " já foi definida");
+		}
+		currClass = symbolTable.getClass(classId);
 		n.i.accept(this);
 		for (int i = 0; i < n.vl.size(); i++) {
 			n.vl.elementAt(i).accept(this);
@@ -82,6 +104,7 @@ public class BuildSymbolTableVisitor implements Visitor {
 		for (int i = 0; i < n.ml.size(); i++) {
 			n.ml.elementAt(i).accept(this);
 		}
+		currClass = null;
 	}
 
 	// Identifier i;
@@ -89,6 +112,11 @@ public class BuildSymbolTableVisitor implements Visitor {
 	// VarDeclList vl;
 	// MethodDeclList ml;
 	public void visit(ClassDeclExtends n) {
+		String classId = n.i.toString();
+		if(!symbolTable.addClass(classId, n.j.toString())){
+			error.complain("Classe "+ classId + " já foi definida");
+		}
+		currClass = symbolTable.getClass(classId);
 		n.i.accept(this);
 		n.j.accept(this);
 		for (int i = 0; i < n.vl.size(); i++) {
@@ -97,11 +125,21 @@ public class BuildSymbolTableVisitor implements Visitor {
 		for (int i = 0; i < n.ml.size(); i++) {
 			n.ml.elementAt(i).accept(this);
 		}
+		currClass = null;
 	}
 
 	// Type t;
 	// Identifier i;
 	public void visit(VarDecl n) {
+		Type t = n.t;
+		String id = n.i.toString();
+		if (currMethod == null) {
+			if (!currClass.addVar(id,t)) {
+				error.complain("Variável " + id + " já foi definida");
+			}
+		} else if (!currMethod.addVar(id,t)) {
+			error.complain("Variável " + id + " já foi definida");
+		}
 		n.t.accept(this);
 		n.i.accept(this);
 	}
@@ -113,6 +151,12 @@ public class BuildSymbolTableVisitor implements Visitor {
 	// StatementList sl;
 	// Exp e;
 	public void visit(MethodDecl n) {
+		String id = n.i.toString();
+		Type t = n.t;
+		if(!currClass.addMethod(id, t)){
+			error.complain("Método "+ id +" já foi definido");
+		}
+		currMethod = symbolTable.getMethod(id, currClass.getId());
 		n.t.accept(this);
 		n.i.accept(this);
 		for (int i = 0; i < n.fl.size(); i++) {
@@ -125,6 +169,7 @@ public class BuildSymbolTableVisitor implements Visitor {
 			n.sl.elementAt(i).accept(this);
 		}
 		n.e.accept(this);
+		currMethod = null;
 	}
 
 	// Type t;
