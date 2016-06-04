@@ -175,6 +175,10 @@ public class BuildSymbolTableVisitor implements Visitor {
 	// Type t;
 	// Identifier i;
 	public void visit(Formal n) {
+		String id = n.i.toString();
+		if(!currMethod.addParam(id, n.t)){
+			error.complain("Parametro " + id+ " já foi definido no método " + currMethod.getId());
+		}
 		n.t.accept(this);
 		n.i.accept(this);
 	}
