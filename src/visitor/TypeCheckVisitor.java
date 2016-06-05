@@ -2,6 +2,7 @@ package visitor;
 
 import symboltable.Class;
 import symboltable.Method;
+import symboltable.Variable;
 import symboltable.SymbolTable;
 
 import javax.swing.border.EtchedBorder;
@@ -132,7 +133,7 @@ public class TypeCheckVisitor implements TypeVisitor {
 	// StatementList sl;
 	// Exp e;
 	//PUBLIC type:tp ident:id LPAREN formalList:formalLs RPAREN LBRACE varList:vars stmtList:stmtLs
-    //RETURN expr:expr SEMI RBRACE
+	//RETURN expr:expr SEMI RBRACE
 	public Type visit(MethodDecl n) {
 		currMethod = symbolTable.getMethod(n.i.s, currClass.getId());
 		Type t = n.t.accept(this);
@@ -148,7 +149,7 @@ public class TypeCheckVisitor implements TypeVisitor {
 		}
 		Type e = n.e.accept(this);
 		if(!(symbolTable.compareTypes(t, e))){
-			error.complain("Tipo de retorno inválido no método " + n.i.s);
+			error.complain("Erro no tipo do retorno do método " + n.i.s);
 		}
 		currMethod = null;
 		return null;
@@ -194,7 +195,7 @@ public class TypeCheckVisitor implements TypeVisitor {
 		n.s1.accept(this);
 		n.s2.accept(this);
 		if(!(e instanceof BooleanType)){
-			error.complain("Condição do if deve ser Boolean");
+			error.complain("Condição do if deve ser do tipo Boolean");
 		}
 		return null;
 	}
@@ -378,12 +379,12 @@ public class TypeCheckVisitor implements TypeVisitor {
 		for (int i = 0; i < n.el.size(); i++) {
 			n.el.elementAt(i).accept(this);
 		}
-		
+
 		/*Type[] el = new Type[n.el.size()];
 		for (int i = 0; i < n.el.size(); i++) {
 			el[i] = n.el.elementAt(i).accept(this);
 		}*/
-		
+
 		if(e == null){
 			return null;
 		}
@@ -391,16 +392,16 @@ public class TypeCheckVisitor implements TypeVisitor {
 			error.complain(n.e.toString() + " deve ser do tipo IdentifierType");
 			return null;
 		}
-		
+
 		Class c = symbolTable.getClass(((IdentifierType) e).s);
 		String metName = n.i.s;
 		Method m = symbolTable.getMethod(metName, c.getId());
-		
+
 		int sizeM = 0;
 		while(m.getParamAt(sizeM) != null){
 			sizeM += 1;
 		}
-		
+
 		//Verifica se a classe c possui método m
 		if(!c.containsMethod(m.getId())){
 			error.complain("Classe " + c.getId() + " não contém método " + m.getId());
@@ -465,8 +466,8 @@ public class TypeCheckVisitor implements TypeVisitor {
 		if(t == null){
 			return null;
 		}
-		String id = n.i.toString();
-		if(symbolTable.getClass(id) == null){
+		String id = n.i.s;
+		if(!(symbolTable.containsClass(id))){
 			error.complain("Classe " + id + " não foi existe");
 			return null;
 		}
@@ -488,6 +489,25 @@ public class TypeCheckVisitor implements TypeVisitor {
 
 	// String s;
 	public Type visit(Identifier n) {
-		return null;
+		if(n == null){
+			return null;
+		}
+		String id = n.s;
+		Variable v = null;
+		if(currMethod != null){
+			v = currMethod.getParam(id);
+			if(v == null){
+				v = currMethod.getVar(id);
+			}
+			if(v == null){
+				v = currClass.getVar(id);
+			}
+		} else if(currClass != null){
+			v = currClass.getVar(id);
+		}
+		if(v == null){
+			return null;
+		}
+		return v.type();
 	}
 }
